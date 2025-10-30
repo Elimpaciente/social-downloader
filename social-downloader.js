@@ -74,7 +74,7 @@ function detect(u) {
   if (u.includes('youtu')) return 'youtube'
   if (u.includes('instagram')) return 'instagram'
   if (u.includes('tiktok')) return 'tiktok'
-  if (u.includes('.x.')) return 'x'
+  if (u.includes('x.com') || u.includes('twitter.com')) return 'x'
   return null
 }
 
@@ -86,6 +86,28 @@ function res(data, status = 200) {
       'Access-Control-Allow-Origin': '*'
     }
   })
+}
+
+const API_URL = "https://allvideodownloader.cc/wp-json/aio-dl/video-data/"
+const API_TOKEN = "c99f113fab0762d216b4545e5c3d615eefb30f0975fe107caab629d17e51b52d"
+
+async function callAPI(u) {
+  const f = new URLSearchParams()
+  f.append('url', u)
+  f.append('token', API_TOKEN)
+  
+  const r = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "User-Agent": "Mozilla/5.0"
+    },
+    body: f.toString(),
+    signal: AbortSignal.timeout(30000)
+  })
+  
+  if (!r.ok) throw new Error()
+  return await r.json()
 }
 
 async function spotify(u) {
@@ -138,27 +160,8 @@ async function spotify(u) {
 }
 
 async function youtube(u) {
-  const A = "https://allvideodownloader.cc/wp-json/aio-dl/video-data/"
-  const T = "c99f113fab0762d216b4545e5c3d615eefb30f0975fe107caab629d17e51b52d"
-  
   try {
-    const f = new URLSearchParams()
-    f.append('url', u)
-    f.append('token', T)
-    
-    const r = await fetch(A, {
-      method: 'POST',
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": "Mozilla/5.0"
-      },
-      body: f.toString(),
-      signal: AbortSignal.timeout(30000)
-    })
-    
-    if (!r.ok) throw new Error()
-    
-    const d = await r.json()
+    const d = await callAPI(u)
     const m = d.medias || []
     const q = m.find(x => x.quality === "mp4 (360p)")
     const dl = q?.url || m[0]?.url || ""
@@ -203,43 +206,28 @@ async function instagram(u) {
 }
 
 async function igPrimary(u) {
-  const A = "https://allvideodownloader.cc/wp-json/aio-dl/video-data/"
-  const T = "c99f113fab0762d216b4545e5c3d615eefb30f0975fe107caab629d17e51b52d"
-  
-  const f = new URLSearchParams()
-  f.append('url', u)
-  f.append('token', T)
-  
-  const r = await fetch(A, {
-    method: 'POST',
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "User-Agent": "Mozilla/5.0"
-    },
-    body: f.toString(),
-    signal: AbortSignal.timeout(30000)
-  })
-  
-  if (!r.ok) return null
-  
-  const d = await r.json()
-  const m = d.medias || []
-  const q = m.find(x => x.quality === "mp4 (360p)")
-  const dl = q?.url || m[0]?.url || ""
-  
-  if (!dl) return null
-  
-  return res({
-    status_code: 200,
-    developer: 'El Impaciente',
-    telegram_channel: 'https://t.me/Apisimpacientes',
-    platform: 'Instagram',
-    result: {
-      title: d.title || "Instagram Video",
-      duration: d.duration || "Unknown",
-      download_url: dl
-    }
-  })
+  try {
+    const d = await callAPI(u)
+    const m = d.medias || []
+    const q = m.find(x => x.quality === "mp4 (360p)")
+    const dl = q?.url || m[0]?.url || ""
+    
+    if (!dl) return null
+    
+    return res({
+      status_code: 200,
+      developer: 'El Impaciente',
+      telegram_channel: 'https://t.me/Apisimpacientes',
+      platform: 'Instagram',
+      result: {
+        title: d.title || "Instagram Video",
+        duration: d.duration || "Unknown",
+        download_url: dl
+      }
+    })
+  } catch {
+    return null
+  }
 }
 
 async function igFallback(u) {
@@ -273,27 +261,8 @@ async function igFallback(u) {
 }
 
 async function tiktok(u) {
-  const A = "https://allvideodownloader.cc/wp-json/aio-dl/video-data/"
-  const T = "c99f113fab0762d216b4545e5c3d615eefb30f0975fe107caab629d17e51b52d"
-  
   try {
-    const f = new URLSearchParams()
-    f.append('url', u)
-    f.append('token', T)
-    
-    const r = await fetch(A, {
-      method: 'POST',
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": "Mozilla/5.0"
-      },
-      body: f.toString(),
-      signal: AbortSignal.timeout(30000)
-    })
-    
-    if (!r.ok) throw new Error()
-    
-    const d = await r.json()
+    const d = await callAPI(u)
     const m = d.medias || []
     const q = m.find(x => x.quality === "mp4 (360p)")
     const dl = q?.url || m[0]?.url || ""
@@ -320,27 +289,8 @@ async function tiktok(u) {
 }
 
 async function x(u) {
-  const A = "https://allvideodownloader.cc/wp-json/aio-dl/video-data/"
-  const T = "c99f113fab0762d216b4545e5c3d615eefb30f0975fe107caab629d17e51b52d"
-  
   try {
-    const f = new URLSearchParams()
-    f.append('url', u)
-    f.append('token', T)
-    
-    const r = await fetch(A, {
-      method: 'POST',
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": "Mozilla/5.0"
-      },
-      body: f.toString(),
-      signal: AbortSignal.timeout(30000)
-    })
-    
-    if (!r.ok) throw new Error()
-    
-    const d = await r.json()
+    const d = await callAPI(u)
     const m = d.medias || []
     const q = m.find(x => x.quality === "mp4 (360p)")
     const dl = q?.url || m[0]?.url || ""
