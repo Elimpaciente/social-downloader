@@ -223,34 +223,27 @@ async function youtube(u) {
       throw new Error('No data available')
     }
     
-    return res({
+    const result = {
       status_code: 200,
       developer: 'El Impaciente',
       telegram_channel: 'https://t.me/Apisimpacientes',
       platform: 'YouTube',
-      result: {
-        title: videoData?.title || "YouTube Video",
-        duration: videoData?.duration || "Unknown",
-        downloads: {
-          video_360p: videoData ? {
-            quality: '360p',
-            download_url: videoData.download_url,
-            source: 'allvideodownloader'
-          } : null,
-          video_720p: arincyVideo ? {
-            quality: '720p',
-            download_url: arincyVideo.download_url,
-            filename: arincyVideo.filename,
-            source: 'arincy'
-          } : null,
-          audio: arincyAudio ? {
-            download_url: arincyAudio.download_url,
-            filename: arincyAudio.filename,
-            source: 'arincy'
-          } : null
-        }
-      }
-    })
+      title: videoData?.title || "YouTube Video"
+    }
+    
+    if (videoData) {
+      result['Video 360p'] = videoData.download_url
+    }
+    
+    if (arincyVideo) {
+      result['Video 720p'] = arincyVideo.download_url
+    }
+    
+    if (arincyAudio) {
+      result['Audio'] = arincyAudio.download_url
+    }
+    
+    return res(result)
   } catch {
     return res({
       status_code: 400,
