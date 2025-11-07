@@ -110,6 +110,21 @@ async function callAPI(u) {
   return await r.json()
 }
 
+// Nueva función para llamar a la API de Arincy
+async function callArincyAPI(u, type, quality) {
+  const arincyUrl = `https://api.arincy.site/api/youtube?url=${encodeURIComponent(u)}&type=${type}&quality=${quality}`
+  
+  const r = await fetch(arincyUrl, {
+    headers: {
+      "User-Agent": "Mozilla/5.0"
+    },
+    signal: AbortSignal.timeout(30000)
+  })
+  
+  if (!r.ok) throw new Error()
+  return await r.json()
+}
+
 async function spotify(u) {
   try {
     const info = await fetch(`https://api.fabdl.com/spotify/get?url=${encodeURIComponent(u)}`, {
@@ -161,10 +176,52 @@ async function spotify(u) {
 
 async function youtube(u) {
   try {
-    const d = await callAPI(u)
-    const m = d.medias || []
-    const q = m.find(x => x.quality === "mp4 (360p)")
-    const dl = q?.url || m[0]?.url || ""
+    // Llamar a la API original (allvideodownloader)
+    let videoData = null
+    try {
+      const d = await callAPI(u)
+      const m = d.medias || []
+      const q = m.find(x => x.quality === "mp4 (360p)")
+      const dl = q?.url || m[0]?.url || ""
+      
+      if (dl) {
+        videoData = {
+          title: d.title || "Unknown",
+          duration: d.duration || "Unknown",
+          download_url: dl
+        }
+      }
+    } catch {}
+    
+    // Llamar a la API de Arincy para video 720p
+    let arincyVideo = null
+    try {
+      const arincyData = await callArincyAPI(u, 'video', '720')
+      if (arincyData.status === true && arincyData.data?.url) {
+        arincyVideo = {
+          quality: '720p',
+          download_url: arincyData.data.url,
+          filename: arincyData.data.filename || 'video_720p.mp4'
+        }
+      }
+    } catch {}
+    
+    // Llamar a la API de Arincy para audio
+    let arincyAudio = null
+    try {
+      const arincyAudioData = await callArincyAPI(u, 'audio', '720')
+      if (arincyAudioData.status === true && arincyAudioData.data?.url) {
+        arincyAudio = {
+          download_url: arincyAudioData.data.url,
+          filename: arincyAudioData.data.filename || 'audio.mp3'
+        }
+      }
+    } catch {}
+    
+    // Si no hay ningún resultado exitoso
+    if (!videoData && !arincyVideo && !arincyAudio) {
+      throw new Error('No data available')
+    }
     
     return res({
       status_code: 200,
@@ -172,9 +229,26 @@ async function youtube(u) {
       telegram_channel: 'https://t.me/Apisimpacientes',
       platform: 'YouTube',
       result: {
-        title: d.title || "Unknown",
-        duration: d.duration || "Unknown",
-        download_url: dl
+        title: videoData?.title || "YouTube Video",
+        duration: videoData?.duration || "Unknown",
+        downloads: {
+          video_360p: videoData ? {
+            quality: '360p',
+            download_url: videoData.download_url,
+            source: 'allvideodownloader'
+          } : null,
+          video_720p: arincyVideo ? {
+            quality: '720p',
+            download_url: arincyVideo.download_url,
+            filename: arincyVideo.filename,
+            source: 'arincy'
+          } : null,
+          audio: arincyAudio ? {
+            download_url: arincyAudio.download_url,
+            filename: arincyAudio.filename,
+            source: 'arincy'
+          } : null
+        }
       }
     })
   } catch {
