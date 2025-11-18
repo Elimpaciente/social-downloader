@@ -133,8 +133,12 @@ function extractTitleFromUrl(url) {
     const parts = nameWithoutExt.split('-')
     parts.pop()
     let title = parts.join(' ')
+    title = title.replace(/\.(ytshorts|savetube|me|vip).*$/i, '')
+    title = title.replace(/\s*(720|1080|480|360|4k)\s*$/i, '')
     title = title.replace(/\./g, ' ')
+    title = title.trim()
     title = title.split(' ')
+      .filter(word => word.length > 0)
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ')
     return title || "YouTube Video"
