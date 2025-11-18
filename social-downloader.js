@@ -143,33 +143,37 @@ async function handleRequest(request) {
 }
 
 async function getKomeTranscript(videoId) {
-  const response = await fetch('https://kome.ai/api/transcript', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Origin': 'https://kome.ai',
-      'Referer': 'https://kome.ai/tools/youtube-transcript-generator',
-      'User-Agent': 'Mozilla/5.0',
-      'Accept': 'application/json, text/plain, */*'
-    },
-    body: JSON.stringify({
-      video_id: videoId,
-      format: true
-    }),
-    signal: AbortSignal.timeout(30000)
-  })
+  try {
+    const response = await fetch('https://kome.ai/api/transcript', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Origin': 'https://kome.ai',
+        'Referer': 'https://kome.ai/tools/youtube-transcript-generator',
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': 'application/json, text/plain, */*'
+      },
+      body: JSON.stringify({
+        video_id: videoId,
+        format: true
+      }),
+      signal: AbortSignal.timeout(30000)
+    })
 
-  if (!response.ok) {
-    throw new Error('Transcript not available')
+    if (!response.ok) {
+      throw new Error()
+    }
+
+    const data = await response.json()
+
+    if (!data.transcript) {
+      throw new Error()
+    }
+
+    return data.transcript
+  } catch {
+    throw new Error()
   }
-
-  const data = await response.json()
-
-  if (!data.transcript) {
-    throw new Error('Transcript not available')
-  }
-
-  return data.transcript
 }
 
 function jsonResponse(data, status = 200, extraHeaders = {}) {
