@@ -161,18 +161,18 @@ async function getKomeTranscript(videoId) {
     })
 
     if (!response.ok) {
-      throw new Error()
+      throw new Error('unavailable')
     }
 
     const data = await response.json()
 
     if (!data.transcript) {
-      throw new Error()
+      throw new Error('unavailable')
     }
 
     return data.transcript
   } catch {
-    throw new Error()
+    throw new Error('unavailable')
   }
 }
 
@@ -184,4 +184,4 @@ function jsonResponse(data, status = 200, extraHeaders = {}) {
       ...extraHeaders
     }
   })
-}
+          }
