@@ -114,21 +114,9 @@ async function handleRequest(request) {
     }, 400, corsHeaders)
   }
   
-  try {
-    const transcript = await getKomeTranscript(videoId)
-    
-    return jsonResponse({
-      status_code: 200,
-      developer: 'El Impaciente',
-      credits: 'Ashlynn Repository',
-      telegram_channels: {
-        el_impaciente: 'https://t.me/Apisimpacientes',
-        ashlynn_repository: 'https://t.me/Ashlynn_Repository'
-      },
-      response: transcript
-    }, 200, { ...corsHeaders, 'Cache-Control': 'public, max-age=3600' })
-    
-  } catch (error) {
+  const transcript = await getKomeTranscript(videoId)
+  
+  if (transcript === null) {
     return jsonResponse({
       status_code: 400,
       developer: 'El Impaciente',
@@ -140,6 +128,17 @@ async function handleRequest(request) {
       message: 'Transcription unavailable'
     }, 400, corsHeaders)
   }
+  
+  return jsonResponse({
+    status_code: 200,
+    developer: 'El Impaciente',
+    credits: 'Ashlynn Repository',
+    telegram_channels: {
+      el_impaciente: 'https://t.me/Apisimpacientes',
+      ashlynn_repository: 'https://t.me/Ashlynn_Repository'
+    },
+    response: transcript
+  }, 200, { ...corsHeaders, 'Cache-Control': 'public, max-age=3600' })
 }
 
 async function getKomeTranscript(videoId) {
@@ -161,18 +160,18 @@ async function getKomeTranscript(videoId) {
     })
 
     if (!response.ok) {
-      throw new Error('unavailable')
+      return null
     }
 
     const data = await response.json()
 
     if (!data.transcript) {
-      throw new Error('unavailable')
+      return null
     }
 
     return data.transcript
   } catch {
-    throw new Error('unavailable')
+    return null
   }
 }
 
@@ -184,4 +183,4 @@ function jsonResponse(data, status = 200, extraHeaders = {}) {
       ...extraHeaders
     }
   })
-          }
+}
