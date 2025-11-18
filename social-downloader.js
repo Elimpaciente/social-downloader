@@ -110,7 +110,6 @@ async function callAPI(u) {
   return await r.json()
 }
 
-// Nueva función para llamar a la API de Arincy
 async function callArincyAPI(u, type, quality) {
   const arincyUrl = `https://api.arincy.site/api/youtube?url=${encodeURIComponent(u)}&type=${type}&quality=${quality}`
   
@@ -123,6 +122,25 @@ async function callArincyAPI(u, type, quality) {
   
   if (!r.ok) throw new Error()
   return await r.json()
+}
+
+function extractTitleFromUrl(url) {
+  try {
+    const urlObj = new URL(url)
+    const path = urlObj.pathname
+    const filename = path.split('/').pop()
+    const nameWithoutExt = filename.replace(/\.(mp4|mp3|webm)$/i, '')
+    const parts = nameWithoutExt.split('-')
+    parts.pop()
+    let title = parts.join(' ')
+    title = title.replace(/\./g, ' ')
+    title = title.split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ')
+    return title || "YouTube Video"
+  } catch {
+    return "YouTube Video"
+  }
 }
 
 async function spotify(u) {
@@ -223,12 +241,22 @@ async function youtube(u) {
       throw new Error('No data available')
     }
     
+    // Extraer título: priorizar el de allvideodownloader, pero si no está disponible, extraer de URL de Arincy
+    let finalTitle = videoData?.title || "YouTube Video"
+    if (finalTitle === "YouTube Video" || finalTitle === "Unknown") {
+      if (arincyVideo) {
+        finalTitle = extractTitleFromUrl(arincyVideo.download_url)
+      } else if (arincyAudio) {
+        finalTitle = extractTitleFromUrl(arincyAudio.download_url)
+      }
+    }
+    
     const result = {
       status_code: 200,
       developer: 'El Impaciente',
       telegram_channel: 'https://t.me/Apisimpacientes',
       platform: 'YouTube',
-      title: videoData?.title || "YouTube Video"
+      title: finalTitle
     }
     
     if (videoData) {
